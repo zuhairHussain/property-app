@@ -1,0 +1,27 @@
+.notfound-wrapper{
+    background-size: cover;
+    .section-heading {
+        font-size: 20px;
+        color: #000;
+        text-align: center;
+        margin: 0 0 30px 0;
+    }
+    .error_num {
+        font-weight: bold;
+        font-size: 250px;
+        text-align: center;
+        margin: 0;
+        color: #000;
+        line-height: 215px;
+    }
+    .section-para {
+        color: #000;
+        font-size: 16px;
+        max-width: 600px;
+        display: block;
+        margin: 20px auto;
+        text-align: center;
+        line-height: 25px;
+        padding: 0 15px;
+    }
+}
