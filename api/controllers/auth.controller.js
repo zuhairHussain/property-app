@@ -15,8 +15,8 @@ exports.user_create = async function (req, res, next) {
     if (findUser)
       throw new ErrorHandler(401, `The email address ${findUser.email} is already in use.`);
 
-    var hashedPassword = bcrypt.hashSync(password, 8);
-    var user = new User({
+    let hashedPassword = bcrypt.hashSync(password, 8);
+    let user = new User({
       email: email,
       username: username,
       password: hashedPassword
@@ -26,7 +26,7 @@ exports.user_create = async function (req, res, next) {
     if (!saveUser)
       throw new ErrorHandler(500, "Something went wrong please try again!");
 
-    var token = await jwt.sign({ id: saveUser._id }, config.secret, {
+    let token = await jwt.sign({ id: saveUser._id }, config.secret, {
       expiresIn: 86400 // expires in 24 hours
     });
 
@@ -64,26 +64,28 @@ exports.verify_email = function (req, res, next) {
 
 };
 
-exports.user_login = function (req, res, next) {
-  if (req.body.email && req.body.password) {
-    User.findOne({ email: req.body.email }, function (err, user) {
-      if (err) return res.status(500).send({ auth: false, error: "Error on the server." });
-      if (!user) return res.status(401).send({ auth: false, error: "Invalid email or password!" });
-      if (!user.isVerified) return res.status(401).send({ auth: false, error: "User is not verified!" });
-      var passwordIsValid = bcrypt.compareSync(
-        req.body.password,
-        user.password
-      );
-      if (!passwordIsValid)
-        return res.status(401).send({ auth: false, error: "Invalid email or password!" });
-      var token = jwt.sign({ id: user._id }, config.secret, {
-        expiresIn: 86400 // expires in 24 hours
-      });
-      console.log(user);
-      res.status(200).send({ auth: true, token: token, user: { username: user.username, email: user.email } });
+exports.user_login = async function (req, res, next) {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password)
+      throw new ErrorHandler(401, 'Email and Password are required!');
+
+    let user = await User.findOne({ email: email });
+    if (!user)
+      throw new ErrorHandler(401, 'User not found.');
+
+    var passwordIsValid = bcrypt.compareSync(password, user.password);
+    if (!passwordIsValid)
+      throw new ErrorHandler(401, 'Invalid email or password!');
+
+    var token = jwt.sign({ id: user._id }, config.secret, {
+      expiresIn: 86400 // expires in 24 hours
     });
-  } else {
-    res.status(401).send({ auth: false, error: "Email and Password are required!" });
+
+    res.status(200).send({ auth: true, token: token, user: { username: user.username, email: user.email } });
+  } catch (err) {
+    next(err)
   }
 };
 
