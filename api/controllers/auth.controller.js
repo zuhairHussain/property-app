@@ -3,6 +3,7 @@ var bcrypt = require("bcryptjs");
 var config = require("../../config");
 const User = require("../models/user.model");
 const { ErrorHandler } = require('../../lib/errorHandler');
+const { sendVerificationEmail, sendResetPasswordEmail} = require('../../lib/mailer');
 
 exports.user_create = async function (req, res, next) {
   try {
@@ -26,30 +27,36 @@ exports.user_create = async function (req, res, next) {
     if (!saveUser)
       throw new ErrorHandler(500, "Something went wrong please try again!");
 
-    let token = await jwt.sign({ id: saveUser._id }, config.secret, {
+    let verificationToken = await jwt.sign({ id: saveUser._id }, config.secret, {
       expiresIn: 86400 // expires in 24 hours
     });
 
-    res.status(200).send({ token });
+    await sendVerificationEmail({email, verificationToken});
+
+    res.status(200).send({ error: false, message: `Verification email Sent to ${email}. This token will expire after 24 hours.`});
+
     next();
   } catch (err) {
     next(err)
   }
 };
 
-exports.verify_email = function (req, res, next) {
-  const { token } = req.query;
-  if (!token)
-    return res.status(401).send({ auth: false, message: "No token provided." });
+exports.verify_email = async function (req, res, next) {
+  try {
+    const { token } = req.query;
+    let userInfo;
 
-  jwt.verify(token, config.secret, function (err, decoded) {
-    if (err)
-      return res
-        .status(500)
-        .send({ auth: false, message: "Failed to authenticate." });
+    if (!token)
+      res.status(401).redirect("/login?message=Email is not verified!");
 
-    User.findOneAndUpdate(
-      { _id: decoded.id },
+    try {
+      userInfo = await jwt.verify(token, config.secret);
+    } catch(err) {
+        res.status(401).redirect("/login?message=Email is not verified!");
+    }
+
+    await User.findOneAndUpdate(
+      { _id: userInfo.id },
       { $set: { isVerified: true } },
       { new: true }
     ).then(doc => {
@@ -59,9 +66,11 @@ exports.verify_email = function (req, res, next) {
         res.status(401).redirect("/login?message=Email is not verified!");
       }
     });
-  });
 
-
+    next();
+  } catch (err) {
+    next(err)
+  }
 };
 
 exports.user_login = async function (req, res, next) {
@@ -78,63 +87,48 @@ exports.user_login = async function (req, res, next) {
     var passwordIsValid = bcrypt.compareSync(password, user.password);
     if (!passwordIsValid)
       throw new ErrorHandler(401, 'Invalid email or password!');
+    
+    if (!user.isVerified)
+      throw new ErrorHandler(401, 'User is not verified!');
 
     var token = jwt.sign({ id: user._id }, config.secret, {
       expiresIn: 86400 // expires in 24 hours
     });
 
-    res.status(200).send({ auth: true, token: token, user: { username: user.username, email: user.email } });
+    res.status(200).send({ error: false, token: token, user: { username: user.username, email: user.email } });
+
+    next();
   } catch (err) {
     next(err)
   }
 };
 
-exports.me = function (req, res, next) {
-  var token = req.headers["x-access-token"];
-  if (!token)
-    return res.status(401).send({ auth: false, message: "No token provided." });
+exports.reset_password_request = async function (req, res, next) {
+  try {
+    const { email } = req.body;
+    let user;
 
-  jwt.verify(token, config.secret, function (err, decoded) {
-    if (err)
-      return res
-        .status(500)
-        .send({ auth: false, message: "Failed to authenticate token." });
+    if (!email)
+      throw new ErrorHandler(401, 'Please provide email address!');
 
-    User.findById(decoded.id, { password: 0, _id: 0, isVerified: 0 }, function (err, user) {
-      if (err)
-        return res.status(500).send("There was a problem finding the user.");
-      if (!user) return res.status(404).send("No user found.");
-
-      res.status(200).send({ auth: true, user });
-
+    await User.findOne({ email: email }).then(userData => {
+      if(!userData || !userData.isVerified){
+        throw new ErrorHandler(401, 'No user found!');
+      }
+      user = userData;
     });
-  });
-};
 
-exports.reset_password_request = function (req, res, next) {
-  const { email } = req.body;
-  if (email) {
-    User.findOne({
-      email: email
-    })
-      .then(doc => {
-        if (doc) {
-          var token = jwt.sign({ id: doc._id }, config.secret, {
-            expiresIn: 86400 // expires in 24 hours
-          });
-          // common.passwordResetLink({ email: doc.email, token: token }).then(function (response, error) {
-          //   if (error) {
-          //     res.status(500).send({ error: "something went wrong please try again! " + error });
-          //   } else {
-          //     res.status(200).send({ message: `Verification email Sent to ${doc.email}` });
-          //   }
-          // });
-        } else {
-          res.status(200).json({ error: 'Email not found!' });
-        }
-      });
-  } else {
-    res.status(200).send({ error: "Please provide email address!" });
+    let token = await jwt.sign({ id: user._id }, config.secret, {
+      expiresIn: 86400 // expires in 24 hours
+    });
+    
+    await sendResetPasswordEmail({email, token});
+
+    res.status(200).send({ error: false, message: `Verification email Sent to ${user.email}` });
+
+    next();
+  } catch (err) {
+    next(err)
   }
 };
 
