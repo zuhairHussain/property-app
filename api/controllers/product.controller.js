@@ -1,22 +1,23 @@
 const Product = require("../models/product.model");
 
 exports.product_create = function (req, res, next) {
-  if (req.body.name && req.body.price && req.userId) {
-    let product = new Product({
-      name: req.body.name,
-      price: req.body.price,
-      user: req.userId
-    });
-    product.save(function (err, product) {
-      if (err) {
-        return next(err);
-      } else {
-        res.status(200).send({ product: product });
-      }
-    });
-  } else {
-    res.status(500).send("Invalid Information");
-  }
+  res.status(200).send("Success");
+  // if (req.body.name && req.body.price && req.userId) {
+  //   let product = new Product({
+  //     name: req.body.name,
+  //     price: req.body.price,
+  //     user: req.userId
+  //   });
+  //   product.save(function (err, product) {
+  //     if (err) {
+  //       return next(err);
+  //     } else {
+  //       res.status(200).send({ product: product });
+  //     }
+  //   });
+  // } else {
+  //   res.status(500).send("Invalid Information");
+  // }
 };
 
 exports.product_update = function (req, res, next) {

@@ -3,13 +3,12 @@ var bcrypt = require("bcryptjs");
 var config = require("../../config");
 const User = require("../models/user.model");
 const { ErrorHandler } = require('../../lib/errorHandler');
-const { sendVerificationEmail, sendResetPasswordEmail} = require('../../lib/mailer');
 
 exports.user_create = async function (req, res, next) {
   try {
-    const { email, username, password } = req.body;
+    const { email, username, password, role } = req.body;
 
-    if (!email || !username || !password)
+    if (!email || !username || !password || !role)
       throw new ErrorHandler(401, 'Invalid Information provided.');
 
     let findUser = await User.findOne({ email: email });
@@ -20,20 +19,21 @@ exports.user_create = async function (req, res, next) {
     let user = new User({
       email: email,
       username: username,
-      password: hashedPassword
+      password: hashedPassword,
+      role: role || "basic" 
     });
 
     let saveUser = await user.save();
     if (!saveUser)
       throw new ErrorHandler(500, "Something went wrong please try again!");
 
-    let verificationToken = await jwt.sign({ id: saveUser._id }, config.secret, {
+    let accessToken = await jwt.sign({ id: saveUser._id, role: role || "basic"  }, config.secret, {
       expiresIn: 86400 // expires in 24 hours
     });
 
-    await sendVerificationEmail({email, verificationToken});
+    user.accessToken = accessToken;
 
-    res.status(200).send({ error: false, message: `Verification email Sent to ${email}. This token will expire after 24 hours.`});
+    res.status(200).send({ error: false, accessToken});
 
     next();
   } catch (err) {
@@ -87,15 +87,13 @@ exports.user_login = async function (req, res, next) {
     var passwordIsValid = bcrypt.compareSync(password, user.password);
     if (!passwordIsValid)
       throw new ErrorHandler(401, 'Invalid email or password!');
-    
-    if (!user.isVerified)
-      throw new ErrorHandler(401, 'User is not verified!');
 
-    var token = jwt.sign({ id: user._id }, config.secret, {
+    var accessToken = jwt.sign({ id: user._id, role: user.role }, config.secret, {
       expiresIn: 86400 // expires in 24 hours
     });
+    await User.findByIdAndUpdate(user._id, { accessToken });
 
-    res.status(200).send({ error: false, token: token, user: { username: user.username, email: user.email } });
+    res.status(200).send({ error: false, token: accessToken, user: { username: user.username, email: user.email, role: user.role } });
 
     next();
   } catch (err) {
