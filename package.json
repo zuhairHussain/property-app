@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "start": "nodemon ./bin/www",
-    "client": "cd client && yarn start",
+    "client": "cd client && npm start",
     "server": "nodemon server.js",
-    "dev": "concurrently --kill-others-on-fail \"npm start\" \"yarn client\""
+    "dev": "concurrently --kill-others-on-fail \"npm start\" \"npm run client\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
