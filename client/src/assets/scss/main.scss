@@ -1,7 +1,7 @@
 @import "~bootstrap/scss/bootstrap";
 
 body{
-    background-color: #f7f7f7;
+    background-color: #f2f4f8;
     .loader-wrapper {
         position: fixed;
         top: 0;
@@ -26,5 +26,15 @@ body{
             100% { transform: rotate(360deg); }
         }
     }
-
+    .side-nav {
+        max-width: 260px;
+        width: 100%;
+        border-right: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .main {
+        flex: 1;
+    }
+    header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
 }

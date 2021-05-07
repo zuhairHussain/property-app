@@ -23,12 +23,12 @@ export default class Container extends Component {
                 {
                     !noHeader ? (<Header toggleNav={() => this.toggleNav()} withoutNav={withoutNav ? withoutNav : ""} hideLogout={hideLogout} />) : ""
                 }
-                <div className={withoutNav ? 'main-cnt clearfix' : 'main-cnt sidebar-nav-main clearfix'}>
+                <div className={withoutNav ? 'main-cnt clearfix' : 'main-cnt sidebar-nav-main clearfix d-flex'}>
                     {
                         !withoutNav ? (<Nav />) : ""
                     }
                     <div className={`${className ? "main " + className : "main"} ${!withoutNav ? " hasNavbar" : ""}`}>
-                        <div className={container ? container : "custom-container"}>
+                        <div className={container ? container : "container"}>
                             {children}
                         </div>
                     </div>
