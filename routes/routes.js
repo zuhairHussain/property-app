@@ -6,6 +6,13 @@ var Role = require("../lib/role");
 
 const product_controller = require("../api/controllers/product.controller");
 const auth_controller = require("../api/controllers/auth.controller");
+const user_controller = require("../api/controllers/users.controller");
+
+
+
+router.get("/users", [VerifyToken, authorize(Role.Admin)], user_controller.get_all_users);
+router.post("/user/delete", [VerifyToken, authorize(Role.Admin)], user_controller.delete_user);
+router.post("/user/update", [VerifyToken, authorize(Role.Admin)], user_controller.update_user);
 
 router.post("/product/create", [VerifyToken, authorize(Role.Admin)], product_controller.product_create);
 router.post("/product/update", VerifyToken, product_controller.product_update);
