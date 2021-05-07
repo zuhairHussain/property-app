@@ -1,6 +1,5 @@
 import { combineReducers } from 'redux';
-import gistReducer from './gistReducer';
-import forkReducer from './forkReducer';
+import loginReducer from './loginReducer';
 
-const mainReducer = combineReducers({gistReducer, forkReducer});
+const mainReducer = combineReducers({loginReducer});
 export default mainReducer;

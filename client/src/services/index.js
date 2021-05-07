@@ -1,18 +1,10 @@
 import axios from "axios";
-const  BASE_URL = 'https://api.github.com';
+const  BASE_URL = 'api/v1';
 
 export default {
-    fetchAllGists: async (username) => {
+    login: async (user) => {
         try{
-            const response = await axios.get(`${BASE_URL}/users/${username}/gists`);
-            return response.data;
-        } catch(err){
-            throw err;
-        }
-    },
-    fetchForkList: async (id) => {
-        try{
-            const response = await axios.get(`${BASE_URL}/gists/${id}/forks`);
+            const response = await axios.post(`${BASE_URL}/login`, user);
             return response.data;
         } catch(err){
             throw err;

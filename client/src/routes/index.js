@@ -1,9 +1,16 @@
-import Home from '../containers/Home';
+import Dashboard from '../containers/Dashboard';
+import Login from '../containers/Login';
 
 let routes = [
     {
         path: "/",
-        component: Home,
+        component: Dashboard,
+        exact: true,
+        private: true
+    },
+    {
+        path: "/login",
+        component: Login,
         exact: true
     }
 ]
