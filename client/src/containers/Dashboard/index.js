@@ -1,12 +1,18 @@
 import React, { Component } from 'react';
 import Container from '../../components/Container';
 import Table from '../../components/DataTable';
+import { history } from '../../history';
 import './dashboard.scss';
 
 const ActionComponent = ({  row, onClick  }) => {
     const clickHandler = () => onClick(row);   
     return <button onClick={clickHandler}>Action</button>;
 };
+const ActionComponentForDelete = ({  row, onClick  }) => {
+    const clickHandler = () => onClick(row.id);   
+    return <button onClick={clickHandler}>Delete</button>;
+};
+
 
 class Dashboard extends Component {
     constructor(props) {
@@ -15,6 +21,12 @@ class Dashboard extends Component {
             columns : [
                 {
                     cell: row => <ActionComponent row={row} onClick={this.handleClick}/>,
+                    ignoreRowClick: true,
+                    allowOverflow: true,
+                    button: true,
+                },
+                {
+                    cell: row => <ActionComponentForDelete row={row} onClick={this.handleClickForDelete}/>,
                     ignoreRowClick: true,
                     allowOverflow: true,
                     button: true,
@@ -40,7 +52,12 @@ class Dashboard extends Component {
 
     handleClick = value => {
       console.log(value)
+      history.push('/edituser');
     };
+
+    handleClickForDelete = value => {
+        console.log(value)
+      };
 
     render() {
         const {users, columns} = this.state;
